@@ -10,9 +10,7 @@ export enum TokenType {
     OpenParen, CloseParen,
     Whitespace,
     BinaryOperator,
-    LParen,
-    RParen,
-    EOF,
+    EOF //signifies the end of the file
 }
 
 export interface Token {
@@ -33,7 +31,7 @@ function isAlpha(src: string): boolean {
     return src.toUpperCase() != src.toLowerCase();
 }
 
-function isSkippble(str: string){
+function isSkippble(str: string) {
     return str == ' ' || str == '\n' || str == '\t';
 }
 
@@ -78,19 +76,21 @@ export function tokenize(sourceCode: string): Token[] {
                 if (reserved == undefined) {
                     tokens.push(token(ident, TokenType.Identifier));
                 }
-                tokens.push(token(ident, reserved));
-            }else if (isSkippble(src[0])){
+                else { tokens.push(token(ident, reserved)); }
+
+            } else if (isSkippble(src[0])) {
                 src.shift(); //skip the current character
-            }else{
+            } else {
                 console.log('Unrecognized character found in lexer');
                 Deno.exit(1);
             }
         }
     }
+    tokens.push({ type: TokenType.EOF, value: "EndOfFile" });
     return tokens;
 }
 
 const source = await Deno.readTextFile("./test.txt");
-for (const token of tokenize(source)){
+for (const token of tokenize(source)) {
     console.log(token);
 }
