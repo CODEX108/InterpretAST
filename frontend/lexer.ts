@@ -3,24 +3,34 @@
 
 
 export enum TokenType {
+    //Literal types
+    Null,
     Number,
     Identifier,
-    Equlas,
+
+    //keywords
     Let,
+
+    //Grouping + Operators
+    Equlas,
     OpenParen, CloseParen,
     Whitespace,
     BinaryOperator,
     EOF //signifies the end of the file
 }
 
+//Represent a single token form the source code
 export interface Token {
     value: string;
     type: TokenType;
 }
 
+//Constant lookup of 
 const KEYWORDS: Record<string, TokenType> = {
-    "let": TokenType.Let
+    "let": TokenType.Let,
+    "null": TokenType.Null
 }
+
 //token creater function
 function token(value = "", type: TokenType): Token {
     return { value, type };
@@ -73,7 +83,7 @@ export function tokenize(sourceCode: string): Token[] {
                 }
                 //check for reserved keywords
                 const reserved = KEYWORDS[ident];
-                if (reserved == undefined) {
+                if (typeof reserved == "number") {
                     tokens.push(token(ident, TokenType.Identifier));
                 }
                 else { tokens.push(token(ident, reserved)); }
