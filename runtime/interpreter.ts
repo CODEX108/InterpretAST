@@ -1,10 +1,10 @@
-import { NullVal, NumberVal, RuntimeVal, ValueTypes } from './values.ts';
-import { NodeType, NumericLiteral, Stat, BinaryExpr, Program } from '../frontend/ast.ts';
+import { NullVal, NumberVal, RuntimeVal } from "./values.ts";
+import { BinaryExpr, NumericLiteral, Program, Stat } from "../frontend/ast.ts";
 
-function evalate_program(program: Program): RuntimeVal {
+function eval_program(program: Program): RuntimeVal {
     let lastEvaluated: RuntimeVal = { type: "null", value: "null" } as NullVal;
     for (const statement of program.body) {
-        lastEvaluated = evalate(statement);
+        lastEvaluated = evaluate(statement);
     }
     return lastEvaluated;
 }
@@ -12,60 +12,68 @@ function evalate_program(program: Program): RuntimeVal {
 /**
  * Evaulate pure numeric operations with binary operators.
  */
-function eval_numberic_binary_expr(lhs: NumberVal, rhs: NumberVal, operator: string): NumberVal {
-    let result:number;
+function eval_numeric_binary_expr(
+    lhs: NumberVal,
+    rhs: NumberVal,
+    operator: string,
+): NumberVal {
+    let result: number;
     if (operator == "+") {
         result = lhs.value + rhs.value;
-    }
-    else if (operator == '-') {
+    } else if (operator == "-") {
         result = lhs.value - rhs.value;
-    }
-    else if (operator == '*') {
+    } else if (operator == "*") {
         result = lhs.value * rhs.value;
-    }
-    else if (operator == '/') {
+    } else if (operator == "/") {
+        // TODO: Division by zero checks
         result = lhs.value / rhs.value;
-        //TODO : Division bu zero checks
+    } else {
+        result = lhs.value % rhs.value;
     }
-    else (operator == "%")
-    result = lhs.value % rhs.value;
 
-    return { type: "number", value: result };
+    return { value: result, type: "number" };
 }
 
-function evalate_binary_expr(binop: BinaryExpr): RuntimeVal {
-    const lhs = evalate(binop.left);
-    const rhs = evalate(binop.right);
+/**
+ * Evaulates expressions following the binary operation type.
+ */
+function eval_binary_expr(binop: BinaryExpr): RuntimeVal {
+    const lhs = evaluate(binop.left);
+    const rhs = evaluate(binop.right);
 
+    // Only currently support numeric operations
     if (lhs.type == "number" && rhs.type == "number") {
-        return eval_numberic_binary_expr(lhs as NumberVal, rhs as NumberVal, binop.operator);
+        return eval_numeric_binary_expr(
+            lhs as NumberVal,
+            rhs as NumberVal,
+            binop.operator,
+        );
     }
 
-    //One or both are null
+    // One or both are NULL
     return { type: "null", value: "null" } as NullVal;
 }
 
-
-export function evalate(astNode: Stat): RuntimeVal {
+export function evaluate(astNode: Stat): RuntimeVal {
     switch (astNode.kind) {
         case "NumericLiteral":
             return {
                 value: ((astNode as NumericLiteral).value),
-                type: "number"
+                type: "number",
             } as NumberVal;
-
         case "NullLiteral":
             return { value: "null", type: "null" } as NullVal;
-
         case "BinaryExpr":
-            return evalate_binary_expr(astNode as BinaryExpr);
+            return eval_binary_expr(astNode as BinaryExpr);
         case "Program":
-            return evalate_program(astNode as Program);
+            return eval_program(astNode as Program);
+
+        // Handle unimplimented ast types as error.
         default:
             console.error(
                 "This AST Node has not yet been setup for interpretation.",
                 astNode,
-              );
-         Deno.exit(0);
+            );
+            Deno.exit(0);
     }
 }
